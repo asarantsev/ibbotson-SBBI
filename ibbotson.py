@@ -14,19 +14,17 @@ def verification(data):
 # reading the data file
 DF = pd.read_excel('ibbotson.xlsx')
 rate = DF['Long'].values
+vol = DF['Volatility'].values[3:]
 trueRet = np.log(1 + DF['Returns'].values[1:] - 0.01 * rate[:-1])
 
 # Regression only for Ibbotson data 1926-2015
-Reg = OLS(trueRet[:-10], pd.DataFrame({'const' : 1, 'duration' : np.diff(np.log(1 + rate * 0.01))}).iloc[:-10]).fit()
+Reg = OLS(trueRet[:-10], pd.DataFrame({'const' : 1, 'duration': np.diff(rate)}).iloc[:-10]).fit()
+
 print('Ibbotson data 1926-2015')
 print(Reg.summary())
 verification(Reg.resid)
 print('stderr = ', np.std(Reg.resid))
 
-# Regression for augmented data if add 8-year zero-coupon Treasury rates 2016-2025
-Reg = OLS(trueRet, pd.DataFrame({'const' : 1, 'duration' : np.diff(np.log(1 + rate * 0.01))})).fit()
-print('Augmented data: Ibbotson 1926-2015')
-print('And zero-coupon Treasury bonds 8 years 2016-2025')
-print(Reg.summary())
-verification(Reg.resid)
-print('stderr = ', np.std(Reg.resid))
+# And now divide residuals by volatility
+print('Residuals after Division by Volatility')
+verification(Reg.resid[2:]/vol[:-10])
